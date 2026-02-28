@@ -221,24 +221,12 @@ def main():
                 o_size  = float(o.get("original_size", o.get("size", 0)))
                 if o_price <= ask_price:
                     continue
-                try:
-                    created_raw = o.get("created_at", "")
-                    ts = float(created_raw)
-                    dt_created = datetime.fromtimestamp(
-                        ts / 1000 if ts > 1e10 else ts, tz=timezone.utc
-                    )
-                    age_hours = (datetime.now(timezone.utc) - dt_created).total_seconds() / 3600
-                except Exception:
-                    age_hours = 999
-                if age_hours < 24:
-                    continue
                 to_cancel.append({
                     "order_id":  o.get("id"),
                     "token_id":  token,
                     "size":      o_size,
                     "old_price": o_price,
                     "new_price": ask_price,
-                    "age_hours": age_hours,
                     "title":     pos.get("title", ""),
                 })
                 cancel_size += o_size
@@ -261,8 +249,8 @@ def main():
         for c in to_cancel:
             try:
                 client.cancel(c["order_id"])
-                print(f"  [CANCEL]  @{c['old_price']:.4f}→{c['new_price']:.4f}  x{c['size']:.2f}  已掛{c['age_hours']:.0f}h  ✓")
-                log(f"CANCEL  token={c['token_id'][:16]}  @{c['old_price']}→{c['new_price']}  x{c['size']:.2f}  {c['age_hours']:.1f}h  ✓  {c['title'][:50]}")
+                print(f"  [CANCEL]  @{c['old_price']:.4f}→{c['new_price']:.4f}  x{c['size']:.2f}  ✓")
+                log(f"CANCEL  token={c['token_id'][:16]}  @{c['old_price']}→{c['new_price']}  x{c['size']:.2f}  ✓  {c['title'][:50]}")
                 ok_c += 1
             except Exception as e:
                 print(f"  [CANCEL]  @{c['old_price']:.4f}  x{c['size']:.2f}  ✗ {e}")
