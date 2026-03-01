@@ -18,6 +18,7 @@ from datetime import datetime, timezone, timedelta
 from py_clob_client.clob_types import OrderArgs, OrderType
 from py_clob_client.order_builder.constants import BUY, SELL
 
+from check_vpn import check_vpn
 from market_utils import (
     make_client, get_usdc_balance, get_open_orders, get_positions,
     get_candidate_markets, build_token_meta, batch_get_books,
@@ -37,8 +38,9 @@ BID_THRESHOLD   = 0.050   # 掛買上限
 MIN_SPREAD      = 0.01    # implied 與 best bid 最小價差（1¢）
 MIN_DAYS_LEFT   = 30      # 距到期最少天數
 
-SPEND_PER_ORDER = 3.0     # 每筆買單花費（USDC）
-MIN_SELL_SIZE   = 1.0     # 低於此 size 不掛賣單（dust）
+SPEND_PER_ORDER   = 3.0     # 每筆買單花費（USDC）
+MIN_SELL_SIZE     = 1.0     # 低於此 size 不掛賣單（dust）
+BUY_EXPIRY_SECONDS = 3600   # 買單有效時間（秒），預設 1 小時
 
 LOG_FILE        = "auto_trade.log"
 
@@ -62,6 +64,12 @@ def main():
     print(f"  auto_trade  {now_str}")
     print(f"{'═'*65}\n")
     log(f"── RUN START  {now_str} ──")
+
+    # ── VPN 檢查 ──────────────────────────────────────────────────────────────
+    if not check_vpn():
+        log("ABORT  VPN 未生效，程式中止")
+        print("程式中止。\n")
+        return
 
     # ── 連線 ──────────────────────────────────────────────────────────────────
     client = make_client()
@@ -172,7 +180,7 @@ def main():
         for r in buy_candidates:
             size = round(SPEND_PER_ORDER / r["bid_price"], 2)
             try:
-                buy_expiry = int(time.time()) + 86400
+                buy_expiry = int(time.time()) + BUY_EXPIRY_SECONDS
                 signed = client.create_order(
                     OrderArgs(price=r["bid_price"], size=size,
                               side=BUY, token_id=r["token_id"],

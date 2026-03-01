@@ -9,7 +9,8 @@ if sys.platform == "win32":
 
 import requests
 
-def check_vpn():
+def check_vpn(silent: bool = False) -> bool:
+    """回傳 True 代表 VPN 已生效（非台灣 IP）；False 代表未生效或查詢失敗。"""
     try:
         r = requests.get("https://ipinfo.io/json", timeout=5)
         data = r.json()
@@ -17,16 +18,23 @@ def check_vpn():
         country = data.get("country", "?")
         city    = data.get("city", "?")
         org     = data.get("org", "?")
-        print(f"IP      : {ip}")
-        print(f"國家    : {country}")
-        print(f"城市    : {city}")
-        print(f"ISP/VPN : {org}")
+        if not silent:
+            print(f"IP      : {ip}")
+            print(f"國家    : {country}")
+            print(f"城市    : {city}")
+            print(f"ISP/VPN : {org}")
         if country == "TW":
-            print("\n⚠ 目前是台灣 IP，VPN 未生效！")
+            if not silent:
+                print("\n⚠ 目前是台灣 IP，VPN 未生效！")
+            return False
         else:
-            print(f"\n✓ VPN 已生效（{country}）")
+            if not silent:
+                print(f"\n✓ VPN 已生效（{country}）")
+            return True
     except Exception as e:
-        print(f"查詢失敗：{e}")
+        if not silent:
+            print(f"查詢失敗：{e}")
+        return False
 
 if __name__ == "__main__":
     check_vpn()
