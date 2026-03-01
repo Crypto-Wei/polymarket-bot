@@ -25,7 +25,7 @@ from market_utils import (
     best_bid, best_ask,
 )
 
-if sys.platform == "win32":
+if sys.platform == "win32" and sys.stdout is not None:
     sys.stdout.reconfigure(encoding="utf-8")
 
 TZ_TAIPEI = timezone(timedelta(hours=8))
@@ -43,6 +43,12 @@ MIN_SELL_SIZE     = 1.0     # 低於此 size 不掛賣單（dust）
 BUY_EXPIRY_SECONDS = 3600   # 買單有效時間（秒），預設 1 小時
 
 LOG_FILE        = "auto_trade.log"
+
+# pythonw.exe 背景執行時 stdout/stderr 為 None，重導向至 log 檔
+if sys.stdout is None:
+    _bg_log = open(LOG_FILE, "a", encoding="utf-8")
+    sys.stdout = _bg_log
+    sys.stderr = _bg_log
 
 # ── 日誌設定 ──────────────────────────────────────────────────────────────────
 

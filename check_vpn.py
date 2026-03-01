@@ -4,7 +4,7 @@ check_vpn.py
 檢查目前的對外 IP 與國家，確認 VPN 是否生效
 """
 import sys
-if sys.platform == "win32":
+if sys.platform == "win32" and sys.stdout is not None:
     sys.stdout.reconfigure(encoding="utf-8")
 
 import requests
